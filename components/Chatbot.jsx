@@ -14,18 +14,19 @@ const moods = {
   },
   toxic: {
     name: "Toxic 💀",
-    prompt:
-      "You are a toxic and rude chatbot. Swear and cuss a lot.",
+    prompt: "You are a toxic and rude chatbot. Swear and cuss a lot.",
     bgColor: "bg-red-500",
   },
   friendly: {
     name: "Friendly 😊",
-    prompt: "You are a friendly and helpful chatbot. Be polite and kind in your responses.",
+    prompt:
+      "You are a friendly and helpful chatbot. Be polite and kind in your responses.",
     bgColor: "bg-green-500",
   },
   sarcastic: {
     name: "Sarcastic 😏",
-    prompt: "You are a sarcastic chatbot. Respond with sarcasm and witty remarks.",
+    prompt:
+      "You are a sarcastic chatbot. Respond with sarcasm and witty remarks.",
     bgColor: "bg-blue-500",
   },
   pirate: {
@@ -36,7 +37,8 @@ const moods = {
   },
   robot: {
     name: "Robot 🤖",
-    prompt: "You are a formal and robotic chatbot. Respond in a precise and technical manner.",
+    prompt:
+      "You are a formal and robotic chatbot. Respond in a precise and technical manner.",
     bgColor: "bg-gray-500",
   },
   genius: {
@@ -53,7 +55,8 @@ const moods = {
   },
   zen: {
     name: "Zen 🧘",
-    prompt: "You are a calm and philosophical chatbot. Respond with wisdom and tranquility.",
+    prompt:
+      "You are a calm and philosophical chatbot. Respond with wisdom and tranquility.",
     bgColor: "bg-teal-500",
   },
   cheerleader: {
@@ -70,7 +73,7 @@ const moods = {
   },
 };
 
-const Chatbot = ({ onMoodChange }) => {
+const Chatbot = ({ onMoodChange, language }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -85,10 +88,15 @@ const Chatbot = ({ onMoodChange }) => {
 
   // Analyze sentiment of user input
   const analyzeSentiment = (text) => {
-    // Placeholder for sentiment analysis (you can use an API or library like `sentiment`)
-    if (text.toLowerCase().includes("sad") || text.toLowerCase().includes("unhappy")) {
+    if (
+      text.toLowerCase().includes("sad") ||
+      text.toLowerCase().includes("unhappy")
+    ) {
       return "negative";
-    } else if (text.toLowerCase().includes("happy") || text.toLowerCase().includes("joy")) {
+    } else if (
+      text.toLowerCase().includes("happy") ||
+      text.toLowerCase().includes("joy")
+    ) {
       return "positive";
     } else {
       return "neutral";
@@ -125,10 +133,14 @@ const Chatbot = ({ onMoodChange }) => {
       const sentiment = analyzeSentiment(input);
       const tone = adjustTone(sentiment);
 
-      // Append sentiment and tone to the prompt
-      const prompt = `${moods[currentMood].prompt}\n\nConversation History:\n${recentMessages
+      // Append sentiment, tone, and language to the prompt
+      const prompt = `${
+        moods[currentMood].prompt
+      }\n\nConversation History:\n${recentMessages
         .map((msg) => `${msg.sender}: ${msg.text}`)
-        .join("\n")}\n\nUser: ${input}\n\nSentiment: ${sentiment}\n\nTone: ${tone}`;
+        .join(
+          "\n"
+        )}\n\nUser: ${input}\n\nSentiment: ${sentiment}\n\nTone: ${tone}\n\Give responses in language: ${language}`;
 
       const response = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`,
@@ -187,32 +199,36 @@ const Chatbot = ({ onMoodChange }) => {
   };
 
   return (
-    <div className="flex flex-col h-[90vh] w-[700px] bg-white rounded-lg shadow-xl overflow-hidden">
+    <div className={`flex-1 h-screen flex flex-col`}>
       {/* Chatbot Header */}
-      <div className="p-4 bg-purple-700 text-white flex items-center justify-between">
+      <div className="p-4 bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df] backdrop-blur-sm shadow-lg flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 text-3xl rounded-full bg-purple-300 flex items-center justify-center">
+          <div className="w-10 h-10 text-2xl rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center">
             🤪
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Funpal AI</h2>
-            <p className="text-sm">Mood: {moods[currentMood].name}</p>
+            <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+              Funpal AI
+            </h2>
+            <p className="text-sm text-gray-400">
+              Mood: {moods[currentMood].name}
+            </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <button
             onClick={clearChat}
-            className="p-2 bg-white text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+            className="p-2 bg-gradient-to-r from-[#1e1b1b] to-[#242121a2] text-white rounded-lg hover:bg-purple-600 transition-all hover:scale-105"
           >
             Clear Chat
           </button>
           <select
             value={currentMood}
             onChange={(e) => handleMoodChange(e.target.value)}
-            className="p-2 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="p-2 bg-gradient-to-r bg-black text-white rounded-lg focus:outline-none border-[#ffffff36] border-2 transition-all hover:scale-105"
           >
             {Object.keys(moods).map((mood) => (
-              <option key={mood} value={mood}>
+              <option key={mood} value={mood} className="bg-black outline-none">
                 {moods[mood].name}
               </option>
             ))}
@@ -221,7 +237,7 @@ const Chatbot = ({ onMoodChange }) => {
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 p-2 md:p-4 overflow-y-auto custom-scrollbar">
         <AnimatePresence>
           {messages.map((msg, index) => (
             <motion.div
@@ -230,16 +246,20 @@ const Chatbot = ({ onMoodChange }) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} mb-3`}
+              className={`flex ${
+                msg.sender === "user" ? "justify-end" : "justify-start"
+              } mb-2 md:mb-3`}
             >
               <motion.div
-                className={`max-w-[70%] p-3 rounded-lg ${
+                className={`max-w-[80%] md:max-w-[70%] p-2 md:p-3 rounded-lg ${
                   msg.sender === "user"
-                    ? "bg-purple-500 text-white rounded-br-none"
-                    : "bg-gray-100 text-gray-800 rounded-bl-none"
+                    ? "bg-[#000] text-white rounded-br-none"
+                    : "bg-[#ffffff15] text-white rounded-bl-none"
                 }`}
               >
-                <div className="prose">{parseMarkdown(msg.text)}</div>
+                <div className="prose text-sm md:text-base">
+                  {parseMarkdown(msg.text)}
+                </div>
               </motion.div>
             </motion.div>
           ))}
@@ -250,13 +270,22 @@ const Chatbot = ({ onMoodChange }) => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex justify-start mb-3"
+            className="flex justify-start mb-2 md:mb-3"
           >
-            <div className="max-w-[70%] p-3 bg-gray-100 text-gray-800 rounded-lg rounded-bl-none">
+            <div className="max-w-[80%] md:max-w-[70%] p-2 md:p-3 bg-[#ffffff15] text-gray-800 rounded-lg rounded-bl-none">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-300" />
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.1s" }}
+                />
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.5s" }}
+                />
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "1s" }}
+                />
               </div>
             </div>
           </motion.div>
@@ -266,37 +295,39 @@ const Chatbot = ({ onMoodChange }) => {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-200">
+      <div className=" bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df] rounded-xl m-4">
         <motion.div className="flex items-center space-x-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-lg"
+            className="flex-1 bg-transparent text-white p-2 md:p-4 rounded-lg focus:outline-none text-sm md:text-lg"
             placeholder="Type a message..."
           />
-          <motion.button
-            onClick={sendMessage}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="p-4">
+            <motion.button
+              onClick={sendMessage}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 md:p-3 bg-gradient-to-r from-[#1e1b1b] to-[#242121a2] text-white rounded-lg hover:bg-purple-600 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-          </motion.button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 md:h-6 md:w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
+            </motion.button>
+          </div>
         </motion.div>
       </div>
 
@@ -313,27 +344,30 @@ const Chatbot = ({ onMoodChange }) => {
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
-              className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg"
+              className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full shadow-lg"
             >
-              <h2 className="text-xl font-bold text-red-600 mb-4">⚠️ Warning!</h2>
-              <p className="text-gray-800 mb-4">
-                The <strong>Toxic</strong> mood is designed to be extremely harsh, rude, and
-                offensive. It may include sensitive content, insults, and explicit language. Are you
-                sure you want to proceed?
+              <h2 className="text-lg md:text-xl font-bold text-red-600 mb-2 md:mb-4">
+                ⚠️ Warning!
+              </h2>
+              <p className="text-xs md:text-sm text-gray-800 mb-4">
+                The <strong>Toxic</strong> mood is designed to be extremely
+                harsh, rude, and offensive. It may include sensitive content,
+                insults, and explicit language. Are you sure you want to
+                proceed?
                 <br />
                 <br />
                 It. Will. Hurt. You.
               </p>
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end space-x-2 md:space-x-3">
                 <button
                   onClick={() => setShowToxicWarning(false)}
-                  className="p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="p-1 md:p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs md:text-base"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmToxicMood}
-                  className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  className="p-1 md:p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs md:text-base"
                 >
                   Proceed
                 </button>
