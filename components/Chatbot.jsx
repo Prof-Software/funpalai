@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseMarkdown } from "../utils/markdownParser";
+import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa"; // React Icons for microphone
 
 // Moods with their personalities and background colors
 const moods = {
@@ -79,7 +80,65 @@ const Chatbot = ({ onMoodChange, language }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentMood, setCurrentMood] = useState("friendly");
   const [showToxicWarning, setShowToxicWarning] = useState(false);
+  const [isListening, setIsListening] = useState(false); // State for speech-to-text
   const messagesEndRef = useRef(null);
+
+  // Speech recognition instance
+  const recognitionRef = useRef(null);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false; // Stop after one sentence
+      recognitionRef.current.interimResults = false; // Only final results
+      recognitionRef.current.lang = language; // Set language
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript); // Set the recognized speech as input
+        setIsListening(false); // Stop listening after receiving speech
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false); // Stop listening when recognition ends
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        if (event.error === "no-speech") {
+          // Handle "no-speech" error gracefully
+          console.log("No speech detected. Microphone turned off.");
+        } else {
+          console.error("Speech recognition error:", event.error);
+        }
+        setIsListening(false); // Stop listening on error
+      };
+    } else {
+      console.warn("Speech recognition not supported in this browser.");
+    }
+  }, [language]);
+
+  // Start/stop speech recognition
+  const toggleSpeechToText = () => {
+    if (isListening) {
+      recognitionRef.current.stop(); // Stop listening
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start(); // Start listening
+      setIsListening(true);
+
+      // Automatically stop listening after 5 seconds if no speech is detected
+      setTimeout(() => {
+        if (isListening) {
+          recognitionRef.current.stop();
+          setIsListening(false);
+          console.log("Microphone turned off due to inactivity.");
+        }
+      }, 5000); // 5 seconds timeout
+    }
+  };
 
   // Scroll to bottom when messages update
   useEffect(() => {
@@ -208,7 +267,7 @@ const Chatbot = ({ onMoodChange, language }) => {
           </div>
           <div>
             <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-              Funpal AI
+              Chat
             </h2>
             <p className="text-sm text-gray-400">
               Mood: {moods[currentMood].name}
@@ -297,6 +356,26 @@ const Chatbot = ({ onMoodChange, language }) => {
       {/* Input Area */}
       <div className=" bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df] rounded-xl m-4">
         <motion.div className="flex items-center space-x-2">
+          {/* Speech-to-Text Button */}
+          <motion.button
+            onClick={toggleSpeechToText}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-2 md:p-3 ml-4 bg-gradient-to-r from-[#1e1b1b] to-[#242121a2] text-white rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            {isListening ? (
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+              >
+                <FaMicrophone className="h-5 w-5 md:h-6 md:w-6" />
+              </motion.div>
+            ) : (
+              <FaMicrophoneSlash className="h-5 w-5 md:h-6 md:w-6" />
+            )}
+          </motion.button>
+
+          {/* Input Field */}
           <input
             type="text"
             value={input}
@@ -305,6 +384,8 @@ const Chatbot = ({ onMoodChange, language }) => {
             className="flex-1 bg-transparent text-white p-2 md:p-4 rounded-lg focus:outline-none text-sm md:text-lg"
             placeholder="Type a message..."
           />
+
+          {/* Send Button */}
           <div className="p-4">
             <motion.button
               onClick={sendMessage}
