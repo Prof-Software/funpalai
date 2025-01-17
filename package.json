@@ -1,0 +1,25 @@
+{
+  "name": "funpal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@react-spring/web": "^9.7.5",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "framer-motion": "^11.18.0",
+    "next": "15.1.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^9.0.3"
+  },
+  "devDependencies": {
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  }
+}
