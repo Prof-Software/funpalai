@@ -4,6 +4,7 @@ import Chatbot from "../components/Chatbot";
 import Sidebar from "@/components/Navbar";
 import Custom from "@/components/Custom";
 import Community from "@/components/Community";
+import Simulator from "@/components/Simulator";
 
 export default function Home() {
   const [currentMood, setCurrentMood] = useState("friendly"); // Default mood
@@ -23,6 +24,7 @@ export default function Home() {
       shakespeare: "bg-pink-500",
       zen: "bg-teal-500",
       cheerleader: "bg-orange-500",
+      kyromaniac: "bg-black",
     };
     return moods[mood] || "bg-purple-500"; // Fallback color
   };
@@ -50,13 +52,8 @@ export default function Home() {
           {activeTab === "chatbot" && (
             <Chatbot onMoodChange={(mood) => setCurrentMood(mood)} language={language} />
           )}
-          {activeTab === "moodRatings" && (
-            <div className="flex-1 p-4">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-                Mood Ratings
-              </h2>
-              {/* Add Mood Ratings content here */}
-            </div>
+          {activeTab === "simulator" && (
+            <Simulator language={language} />
           )}
           {activeTab === "customMoods" && (
             <Custom/>

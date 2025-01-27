@@ -6,19 +6,29 @@
   --background: #ffffff;
   --foreground: #171717;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@font-face {
+  font-family: 'MyFont';
+  src: url('/fonts/kaftan-trial.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
 }
-
+@font-face {
+  font-family: 'Gambarino';
+  src: url('/fonts/gambarino.otf') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "MyFont" ,Arial, Helvetica, sans-serif;
+  background-color: black;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
+
+.gambarino{
+  font-family: "Gambarino" ,Arial, Helvetica, sans-serif;
+}
+
 /* width */
 ::-webkit-scrollbar {
   width: 10px;

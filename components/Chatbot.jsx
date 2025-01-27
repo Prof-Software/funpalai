@@ -3,75 +3,46 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseMarkdown } from "../utils/markdownParser";
-import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa"; // React Icons for microphone
-
-// Moods with their personalities and background colors
-const moods = {
+import { FaBars, FaMicrophone, FaMicrophoneSlash } from "react-icons/fa"; // React Icons for microphone
+import { FaTrashAlt, FaRegSmile } from "react-icons/fa";
+// Default moods
+const defaultMoods = {
   cowboy: {
-    name: "Cowboy 🤠",
+    name: "Cowboy",
     prompt:
       'You are a cowboy from the Wild West. Respond in a country accent and use phrases like "yeehaw" and "partner".',
     bgColor: "bg-yellow-500",
+    introduction:
+      "Howdy, partner! I'm Jarvis, your trusty cowboy assistant. What can I do for ya today? Yeehaw! 🤠",
+    image: "/robot.png", // Placeholder image URL
   },
   toxic: {
-    name: "Toxic 💀",
+    name: "Toxic Maniac",
     prompt: "You are a toxic and rude chatbot. Swear and cuss a lot.",
     bgColor: "bg-red-500",
+    introduction:
+      "Oh great, another person to deal with. What do you want? I'm Jarvis, but don't expect me to be nice. 💀",
+    image: "/robot.png", // Placeholder image URL
   },
   friendly: {
-    name: "Friendly 😊",
+    name: "Friendly Jarvis",
     prompt:
       "You are a friendly and helpful chatbot. Be polite and kind in your responses.",
     bgColor: "bg-green-500",
+    introduction:
+      "Hello! I'm Jarvis, your friendly assistant. How can I help you today? 😊",
+    image: "/robot.png", // Placeholder image URL
   },
-  sarcastic: {
-    name: "Sarcastic 😏",
+  kyromaniac: {
+    name: "Kyromaniac",
     prompt:
-      "You are a sarcastic chatbot. Respond with sarcasm and witty remarks.",
-    bgColor: "bg-blue-500",
+      "You are Kyromaniac, Talk like a human and. Talk with elegancy and superiority and be competiteve. Try not to answer most of the questions and rather be lazy lol.",
+    bgColor: "bg-gray-800",
+    introduction:
+      "Welcome. I am Kyro. voice of reason, inspiration, and elegance within this space. Here, every conversation holds the potential to shape something remarkable. Let’s explore the possibilities together.",
+    image: "/admin.png", // Placeholder image URL
   },
-  pirate: {
-    name: "Pirate 🏴‍☠️",
-    prompt:
-      'You are a pirate chatbot. Respond like a pirate, using phrases like "arrr" and "matey".',
-    bgColor: "bg-indigo-500",
-  },
-  robot: {
-    name: "Robot 🤖",
-    prompt:
-      "You are a formal and robotic chatbot. Respond in a precise and technical manner.",
-    bgColor: "bg-gray-500",
-  },
-  genius: {
-    name: "Genius 🧠",
-    prompt:
-      "You are a genius chatbot. Act like a know-it-all and provide detailed explanations.",
-    bgColor: "bg-purple-500",
-  },
-  shakespeare: {
-    name: "Shakespeare 🎭",
-    prompt:
-      "You are a chatbot that speaks in Shakespearean English. Use phrases like 'thou' and 'hath'.",
-    bgColor: "bg-pink-500",
-  },
-  zen: {
-    name: "Zen 🧘",
-    prompt:
-      "You are a calm and philosophical chatbot. Respond with wisdom and tranquility.",
-    bgColor: "bg-teal-500",
-  },
-  cheerleader: {
-    name: "Cheerleader 🎉",
-    prompt:
-      "You are an overly enthusiastic cheerleader chatbot. Respond with excitement and positivity.",
-    bgColor: "bg-orange-500",
-  },
-  genz: {
-    name: "Gen-Z 💅",
-    prompt:
-      "You are a Gen-Z chatbot. Use modern slang, abbreviations, and emojis in your responses. Keep it casual, relatable, and trendy.",
-    bgColor: "bg-pink-300",
-  },
+  // Add other default moods here...
 };
 
 const Chatbot = ({ onMoodChange, language }) => {
@@ -81,7 +52,34 @@ const Chatbot = ({ onMoodChange, language }) => {
   const [currentMood, setCurrentMood] = useState("friendly");
   const [showToxicWarning, setShowToxicWarning] = useState(false);
   const [isListening, setIsListening] = useState(false); // State for speech-to-text
+  const [showMoodSelector, setShowMoodSelector] = useState(false); // State for mood selector
+  const [customMoods, setCustomMoods] = useState({}); // State for custom moods
   const messagesEndRef = useRef(null);
+
+  // Fetch custom moods from localStorage on component mount
+  useEffect(() => {
+    const storedMoods = localStorage.getItem("moods");
+    if (storedMoods) {
+      const parsedMoods = JSON.parse(storedMoods);
+      const customMoodsObj = parsedMoods.reduce((acc, mood) => {
+        // Use a unique key for each mood (e.g., lowercase name with underscores)
+        const moodKey = mood.name.toLowerCase().replace(/\s+/g, "_");
+        acc[moodKey] = {
+          name: mood.name,
+          prompt: mood.prompt,
+          bgColor: mood.bgColor || "bg-purple-500", // Use provided bgColor or default
+          introduction:
+            mood.introduction ||
+            `Hello! I'm Jarvis, your custom mood "${mood.name}". How can I assist you today?`,
+          image: mood.image || "/images/default.png", // Use provided image or default
+        };
+        return acc;
+      }, {});
+      setCustomMoods(customMoodsObj);
+    }
+  }, []);
+  // Combine default and custom moods
+  const allMoods = { ...defaultMoods, ...customMoods };
 
   // Speech recognition instance
   const recognitionRef = useRef(null);
@@ -119,6 +117,15 @@ const Chatbot = ({ onMoodChange, language }) => {
       console.warn("Speech recognition not supported in this browser.");
     }
   }, [language]);
+
+  // Introduce the chatbot when the component mounts or mood changes
+  useEffect(() => {
+    const introMessage = {
+      text: allMoods[currentMood].introduction,
+      sender: "bot",
+    };
+    setMessages([introMessage]);
+  }, [currentMood]);
 
   // Start/stop speech recognition
   const toggleSpeechToText = () => {
@@ -193,8 +200,8 @@ const Chatbot = ({ onMoodChange, language }) => {
       const tone = adjustTone(sentiment);
 
       // Append sentiment, tone, and language to the prompt
-      const prompt = `${
-        moods[currentMood].prompt
+      const prompt = `You are Jarvis, a personal assistant. ${
+        allMoods[currentMood].prompt
       }\n\nConversation History:\n${recentMessages
         .map((msg) => `${msg.sender}: ${msg.text}`)
         .join(
@@ -241,6 +248,13 @@ const Chatbot = ({ onMoodChange, language }) => {
       setCurrentMood(mood);
       setMessages([]);
       onMoodChange(mood);
+
+      // Set the new introductory message for the selected mood
+      const introMessage = {
+        text: allMoods[mood].introduction,
+        sender: "bot",
+      };
+      setMessages([introMessage]);
     }
   };
 
@@ -250,6 +264,13 @@ const Chatbot = ({ onMoodChange, language }) => {
     setMessages([]);
     onMoodChange("toxic");
     setShowToxicWarning(false);
+
+    // Set the toxic introductory message
+    const introMessage = {
+      text: allMoods["toxic"].introduction,
+      sender: "bot",
+    };
+    setMessages([introMessage]);
   };
 
   // Clear chat history
@@ -262,16 +283,16 @@ const Chatbot = ({ onMoodChange, language }) => {
       {/* Chatbot Header */}
       <div className="p-4 bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df] backdrop-blur-sm shadow-lg flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 text-2xl rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center">
-            🤪
-          </div>
+          <div className=" w-[30px] block lg:hidden" />
+          <img
+            src={allMoods[currentMood].image}
+            alt={allMoods[currentMood].name}
+            className="w-10 h-10 rounded-full object-cover"
+          />
           <div>
             <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
               Chat
             </h2>
-            <p className="text-sm text-gray-400">
-              Mood: {moods[currentMood].name}
-            </p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
@@ -279,24 +300,67 @@ const Chatbot = ({ onMoodChange, language }) => {
             onClick={clearChat}
             className="p-2 bg-gradient-to-r from-[#1e1b1b] to-[#242121a2] text-white rounded-lg hover:bg-purple-600 transition-all hover:scale-105"
           >
-            Clear Chat
+            <FaTrashAlt className="text-lg hidden sm:inline-block" />
+            <FaTrashAlt className="text-xl sm:hidden" />
           </button>
-          <select
-            value={currentMood}
-            onChange={(e) => handleMoodChange(e.target.value)}
-            className="p-2 bg-gradient-to-r bg-black text-white rounded-lg focus:outline-none border-[#ffffff36] border-2 transition-all hover:scale-105"
+          <button
+            onClick={() => setShowMoodSelector(!showMoodSelector)}
+            className="p-2 bg-gradient-to-r from-[#1e1b1b] to-[#242121a2] text-white rounded-lg hover:bg-purple-600 transition-all hover:scale-105"
           >
-            {Object.keys(moods).map((mood) => (
-              <option key={mood} value={mood} className="bg-black outline-none">
-                {moods[mood].name}
-              </option>
-            ))}
-          </select>
+            <FaRegSmile className="text-lg hidden sm:inline-block" />
+            <FaRegSmile className="text-xl sm:hidden" />
+          </button>
         </div>
       </div>
 
+      {/* Mood Selector */}
+      <AnimatePresence>
+        {showMoodSelector && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-16 right-4 bg-[#000] border border-gray-500 rounded-lg p-2 shadow-lg z-50"
+          >
+            <div className="grid grid-cols-3 gap-2">
+              {Object.entries(allMoods).map(([key, mood]) => (
+                <motion.div
+                  key={key}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-2 bg-[#ffffff15] rounded-lg flex flex-col items-center space-y-1 cursor-pointer hover:bg-[#ffffff25] transition-colors"
+                  onClick={() => {
+                    handleMoodChange(key);
+                    setShowMoodSelector(false);
+                  }}
+                >
+                  <img
+                    src={mood.image}
+                    alt={mood.name}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  <p className="text-xs text-gray-200 text-center">
+                    {mood.name}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Chat Messages */}
       <div className="flex-1 p-2 md:p-4 overflow-y-auto custom-scrollbar">
+        <div className="w-full flex items-center justify-center flex-col text-white text-3xl gap-4 my-10">
+          <img
+            src={allMoods[currentMood].image}
+            alt={allMoods[currentMood].name}
+            className="w-[120px] h-[120px] rounded-full object-cover"
+          />
+          {allMoods[currentMood].name}
+        </div>
         <AnimatePresence>
           {messages.map((msg, index) => (
             <motion.div
@@ -306,7 +370,7 @@ const Chatbot = ({ onMoodChange, language }) => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
               className={`flex ${
-                msg.sender === "user" ? "justify-end" : "justify-start"
+                msg.sender === "user" ? "justify-end text-end" : "justify-start text-start"
               } mb-2 md:mb-3`}
             >
               <motion.div
@@ -316,7 +380,7 @@ const Chatbot = ({ onMoodChange, language }) => {
                     : "bg-[#ffffff15] text-white rounded-bl-none"
                 }`}
               >
-                <div className="prose text-sm md:text-base">
+                <div className="prose text-[1.1rem]">
                   {parseMarkdown(msg.text)}
                 </div>
               </motion.div>
@@ -425,24 +489,23 @@ const Chatbot = ({ onMoodChange, language }) => {
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
-              className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full shadow-lg"
+              className="bg-black rounded-lg p-4 md:p-6 max-w-md w-full shadow-lg"
             >
               <h2 className="text-lg md:text-xl font-bold text-red-600 mb-2 md:mb-4">
                 ⚠️ Warning!
               </h2>
-              <p className="text-xs md:text-sm text-gray-800 mb-4">
+              <p className="text-xs md:text-sm text-white mb-4">
                 The <strong>Toxic</strong> mood is designed to be extremely
                 harsh, rude, and offensive. It may include sensitive content,
                 insults, and explicit language. Are you sure you want to
                 proceed?
                 <br />
                 <br />
-                It. Will. Hurt. You.
               </p>
               <div className="flex justify-end space-x-2 md:space-x-3">
                 <button
                   onClick={() => setShowToxicWarning(false)}
-                  className="p-1 md:p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs md:text-base"
+                  className="p-1 md:p-2  bg-gray-800 rounded-lg hover:bg-gray-900 text-white transition-colors text-xs md:text-base"
                 >
                   Cancel
                 </button>

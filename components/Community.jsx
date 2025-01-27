@@ -1,13 +1,14 @@
 "use client";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaPlus } from "react-icons/fa";
 
 const Community = () => {
   // Mock community moods (top 4)
   const topMoods = [
     {
       id: 1,
-      name: "Alien 👽",
+      name: "Alien",
       prompt:
         "You are an alien from another planet. Respond with curiosity about Earth and its inhabitants.",
       creator: "User123",
@@ -15,7 +16,7 @@ const Community = () => {
     },
     {
       id: 2,
-      name: "Time Traveler ⏳",
+      name: "Time Traveler",
       prompt:
         "You are a time traveler from the future. Share insights about what's to come.",
       creator: "TimeLord99",
@@ -23,7 +24,7 @@ const Community = () => {
     },
     {
       id: 3,
-      name: "Mad Scientist 🧪",
+      name: "Mad Scientist",
       prompt:
         "You are a mad scientist. Respond with wild theories and experiments.",
       creator: "DrFrankenstein",
@@ -31,7 +32,7 @@ const Community = () => {
     },
     {
       id: 4,
-      name: "Superhero 🦸‍♂️",
+      name: "Superhero",
       prompt:
         "You are a superhero saving the world. Respond with bravery and heroic phrases.",
       creator: "HeroicSoul",
@@ -74,7 +75,8 @@ const Community = () => {
   return (
     <div className="flex-1 h-screen flex flex-col">
       {/* Community Header */}
-      <div className="p-4 bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df] backdrop-blur-sm shadow-lg flex items-center justify-between">
+      <div className="p-4 bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df] backdrop-blur-sm shadow-lg flex items-center">
+      <div className=" w-[50px] block lg:hidden" />
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 text-2xl rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center">
             🌍
@@ -83,7 +85,7 @@ const Community = () => {
             <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
               Community
             </h2>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400 md:block hidden">
               Explore and share moods created by the community
             </p>
           </div>
@@ -104,7 +106,7 @@ const Community = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-4 bg-[#ffffff15] rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+                className="p-4 bg-[#00000095] rounded-lg shadow-lg hover:shadow-xl transition-shadow text-white"
               >
                 <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
                   {mood.name}
@@ -114,30 +116,7 @@ const Community = () => {
                   <div className="text-sm text-gray-400">
                     <span>By {mood.creator}</span>
                   </div>
-                  <button
-                    onClick={() => handleLike(mood.id)}
-                    className="flex items-center space-x-1 text-sm text-gray-400 hover:text-pink-500 transition-colors"
-                  >
-                    <span>
-                      {mood.likes + (likedMoods.includes(mood.id) ? 1 : 0)}
-                    </span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`h-5 w-5 ${
-                        likedMoods.includes(mood.id)
-                          ? "text-pink-500"
-                          : "text-gray-400"
-                      }`}
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
+                 <FaPlus/>
                 </div>
               </motion.div>
             ))}
@@ -155,7 +134,7 @@ const Community = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-4 bg-[#ffffff15] rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+                className="p-4 bg-[#00000095] rounded-lg shadow-lg hover:shadow-xl transition-shadow"
               >
                 <img
                   src={news.image}
