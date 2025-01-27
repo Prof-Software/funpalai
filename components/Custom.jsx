@@ -36,24 +36,28 @@ const Custom = () => {
   // Fetch real-time data from Firestore
   useEffect(() => {
     const moodsCollection = collection(db, "moods");
-
+  
     // Listen for changes in the moods collection
     const unsubscribe = onSnapshot(moodsCollection, (snapshot) => {
       const moods = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-
+  
+      // Filter out "Kyromaniac" from all moods
+      const filteredMoods = moods.filter((mood) => mood.name !== "Kyromaniac");
+  
       // Separate moods created by the current user and other users
-      const userMoods = moods.filter((mood) => mood.username === creatorName);
-      const otherMoods = moods.filter((mood) => mood.username !== creatorName);
-
+      const userMoods = filteredMoods.filter((mood) => mood.username === creatorName);
+      const otherMoods = filteredMoods.filter((mood) => mood.username !== creatorName);
+  
       setCustomMoods(userMoods);
       setOtherUsersMoods(otherMoods);
     });
-
+  
     return () => unsubscribe(); // Cleanup listener on unmount
   }, [creatorName]);
+  
 
   // Add a new custom mood to Firestore
   const addCustomMood = async () => {
@@ -180,6 +184,32 @@ const Custom = () => {
         <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-4">
           Your Moods
         </h3>
+        <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="p-4 mb-4 bg-[#ffffff15] rounded-lg flex items-center cursor-pointer hover:bg-[#ffffff25] transition-colors flex-col md:flex-col  md:text-justify"
+              >
+                <img
+                  src={"/admin.png"}
+                  alt={"admin"}
+                  className="w-16 h-16 rounded-full object-cover sm:w-14 sm:h-14"
+                />
+                <div className="flex items-center w-full justify-center flex-col gap-1">
+                  <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                    Kyromaniac
+                  </h3>
+                  <p className="text-sm text-gray-300">
+                    The Majestic Presence
+                  </p>
+                  <p className="text-sm text-gray-400 line-clamp-3 text-center">
+                    Step into the presence of The Majestic Kars, a being of unmatched intellect, elegance, and refinement.
+                  </p>
+                </div>
+                </motion.div>
+        </AnimatePresence>
         <AnimatePresence>
           {customMoods.map((mood) => {
             const isKyromaniac = mood.name === "Kyromaniac"; // Check if the mood is "Kyromaniac"
