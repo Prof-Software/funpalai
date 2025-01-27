@@ -3,7 +3,7 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, signInWithPopup,signOut } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: `${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
+  apiKey: "AIzaSyCGftNdJfZOmi3zzKQ9pPYHueYGO6cgyWc",
   authDomain: "funpalai.firebaseapp.com",
   projectId: "funpalai",
   storageBucket: "funpalai.firebasestorage.app",
