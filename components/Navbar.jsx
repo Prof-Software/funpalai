@@ -214,6 +214,16 @@ const Sidebar = ({ onLanguageChange, onTabChange }) => {
                 <span className="text-sm">Community</span>
               </div>
             </div>
+            <div
+              onClick={() => handleTabChange("settings")}
+              className={`p-3 ${
+                activeTab === "settings" ? "bg-[#ffffff10]" : "bg-[#00000065]"
+              } text-gray-200 rounded-lg hover:bg-[#ffffff10] transition-colors cursor-pointer`}
+            >
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">Settings</span>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col space-y-4">

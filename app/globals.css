@@ -19,7 +19,7 @@
   font-style: normal;
 }
 body {
-  font-family: "MyFont" ,Arial, Helvetica, sans-serif;
+  /* font-family: "MyFont" ,Arial, Helvetica, sans-serif; */
   background-color: black;
   overflow-x: hidden;
   overflow-y: hidden;

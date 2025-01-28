@@ -1,15 +1,25 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Chatbot from "../components/Chatbot";
 import Sidebar from "@/components/Navbar";
 import Custom from "@/components/Custom";
 import Community from "@/components/Community";
 import Simulator from "@/components/Simulator";
+import Settings from "@/components/Settings";
 
 export default function Home() {
   const [currentMood, setCurrentMood] = useState("friendly"); // Default mood
   const [language, setLanguage] = useState("en"); // Default language
   const [activeTab, setActiveTab] = useState("chatbot"); // Default tab
+  const [font, setFont] = useState("MyFont"); // Default font
+
+  // Retrieve font from local storage on component mount
+  useEffect(() => {
+    const savedFont = localStorage.getItem('selectedFont');
+    if (savedFont) {
+      setFont(savedFont); // Set the font from local storage
+    }
+  }, []);
 
   // Get the background color for the current mood
   const getBackgroundColor = (mood) => {
@@ -39,11 +49,12 @@ export default function Home() {
     setActiveTab(tab);
   };
 
+  // Determine the background color based on the active tab
+  const backgroundColor = activeTab === "settings" ? "bg-black" : getBackgroundColor(currentMood);
+
   return (
     <div
-      className={`h-screen w-screen flex items-center justify-center transition-colors duration-300 ${getBackgroundColor(
-        currentMood
-      )}`}
+      className={`h-screen w-screen flex items-center font-[${font}] justify-center transition-colors duration-300 ${backgroundColor}`}
     >
       {/* Sidebar and Content Container */}
       <div className="w-full flex items-center justify-center bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df]">
@@ -56,10 +67,13 @@ export default function Home() {
             <Simulator language={language} />
           )}
           {activeTab === "customMoods" && (
-            <Custom/>
+            <Custom />
           )}
           {activeTab === "community" && (
-            <Community/>
+            <Community />
+          )}
+          {activeTab === "settings" && (
+            <Settings font={font} setFont={setFont} />
           )}
         </div>
       </div>
