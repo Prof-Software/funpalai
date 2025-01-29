@@ -54,7 +54,7 @@ export default function Home() {
 
   return (
     <div
-      className={`h-screen w-screen flex items-center font-[MyFont] justify-center transition-colors duration-300 ${backgroundColor}`}
+      className={`h-screen w-screen flex items-center gambarino justify-center transition-colors duration-300 ${backgroundColor}`}
     >
       {/* Sidebar and Content Container */}
       <div className="w-full flex items-center justify-center bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df]">
