@@ -50,11 +50,11 @@ export default function Home() {
   };
 
   // Determine the background color based on the active tab
-  const backgroundColor = activeTab === "settings" ? "bg-black" : getBackgroundColor(currentMood);
+  const backgroundColor = activeTab === "settings" ? "bg-black" : activeTab === "simulator" ? "bg-blue-600": getBackgroundColor(currentMood);
 
   return (
     <div
-      className={`h-screen w-screen flex items-center font-[${font}] justify-center transition-colors duration-300 ${backgroundColor}`}
+      className={`h-screen w-screen flex items-center font-[MyFont] justify-center transition-colors duration-300 ${backgroundColor}`}
     >
       {/* Sidebar and Content Container */}
       <div className="w-full flex items-center justify-center bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df]">

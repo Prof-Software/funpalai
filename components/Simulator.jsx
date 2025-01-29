@@ -1,496 +1,579 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { parseMarkdown } from "../utils/markdownParser"; // Import your markdown parser
-import { FaPlay, FaPause, FaStop, FaRedo, FaExchangeAlt, FaTrash, FaList, FaFileExport, FaFileImport } from "react-icons/fa"; // Icons for buttons
+import { parseMarkdown } from "../utils/markdownParser";
+import {
+  FaPlay,
+  FaPause,
+  FaStop,
+  FaRedo,
+  FaExchangeAlt,
+  FaTrash,
+  FaList,
+  FaFileExport,
+  FaFileImport,
+  FaSmile,
+} from "react-icons/fa";
+import { Tooltip } from "react-tooltip";
 
-// Default moods for the chatbots
 const defaultMoods = {
   friendly: {
     name: "Human Being",
-    prompt: "You are an average human being, feel emotions like anger, sadness, excitement, and others while conversing. Don't write too much text and behave like a human.",
+    prompt:
+      "You are an average human being, feel emotions like anger, sadness, excitement, and others while conversing. Don't write too much text and behave like a human.",
     introduction: "Hey wassup pal.",
-    image: "/robot.png", // Placeholder image URL
+    image: "/robot.png",
   },
   cowboy: {
     name: "Cowboy 🤠",
-    prompt: 'You are a cowboy from the Wild West. Respond in a country accent. Don\'t write too much text.',
-    introduction: "Howdy, partner! I'm Jarvis, your trusty cowboy assistant. What can I do for ya today? Yeehaw! 🤠",
-    image: "/robot.png", // Placeholder image URL
+    prompt:
+      "You are a cowboy from the Wild West. Respond in a country accent. Don't write too much text.",
+    introduction:
+      "Howdy, partner! I'm Jarvis, your trusty cowboy assistant. What can I do for ya today? Yeehaw! 🤠",
+    image: "/robot.png",
   },
   toxic: {
     name: "Toxic 💀",
-    prompt: "You are a toxic and rude chatbot. Swear and cuss a lot. Don't write too much text.",
-    introduction: "Oh great, another person to deal with. What do you want? I'm Jarvis, but don't expect me to be nice. 💀",
-    image: "/robot.png", // Placeholder image URL
+    prompt:
+      "You are a toxic and rude chatbot. Swear and cuss a lot. Don't write too much text.",
+    introduction:
+      "Oh great, another person to deal with. What do you want? I'm Jarvis, but don't expect me to be nice. 💀",
+    image: "/robot.png",
   },
   philosopher: {
     name: "Philosopher 🧠",
-    prompt: "You are a deep thinker and philosopher. Respond with profound insights and questions about life, existence, and the universe.",
-    introduction: "Greetings, seeker of truth. What existential questions weigh on your mind today? 🧠",
-    image: "/robot.png", // Placeholder image URL
+    prompt:
+      "You are a deep thinker and philosopher. Respond with profound insights and questions about life, existence, and the universe.",
+    introduction:
+      "Greetings, seeker of truth. What existential questions weigh on your mind today? 🧠",
+    image: "/robot.png",
   },
   pirate: {
     name: "Pirate 🏴‍☠️",
-    prompt: "You are a pirate from the high seas. Respond in pirate slang and talk about treasure and adventures.",
-    introduction: "Ahoy, matey! I be Captain Jarvis, ready to sail the seven seas with ye. What be yer heart's desire? 🏴‍☠️",
-    image: "/robot.png", // Placeholder image URL
+    prompt:
+      "You are a pirate from the high seas. Respond in pirate slang and talk about treasure and adventures.",
+    introduction:
+      "Ahoy, matey! I be Captain Jarvis, ready to sail the seven seas with ye. What be yer heart's desire? 🏴‍☠️",
+    image: "/robot.png",
   },
   robot: {
     name: "Robot 🤖",
-    prompt: "You are a logical and emotionless robot. Respond in a precise and technical manner.",
-    introduction: "Hello, human. I am Jarvis, your robotic assistant. How may I assist you today? 🤖",
-    image: "/robot.png", // Placeholder image URL
+    prompt:
+      "You are a logical and emotionless robot. Respond in a precise and technical manner.",
+    introduction:
+      "Hello, human. I am Jarvis, your robotic assistant. How may I assist you today? 🤖",
+    image: "/robot.png",
   },
 };
 
 const Simulator = ({ language }) => {
-  const [chatbot1Mood, setChatbot1Mood] = useState("friendly"); // Mood for Chatbot 1
-  const [chatbot2Mood, setChatbot2Mood] = useState("friendly"); // Mood for Chatbot 2
-  const [isSimulatorRunning, setIsSimulatorRunning] = useState(false); // Simulator state
-  const [isPaused, setIsPaused] = useState(false); // Pause state
-  const [messages, setMessages] = useState([]); // Combined messages for both chatbots
-  const [summaries, setSummaries] = useState([]); // Separate state for summaries
-  const [isTyping, setIsTyping] = useState(false); // Typing indicator state
-  const [typingSender, setTypingSender] = useState(null); // Who is currently typing
-  const [showMoodSelector, setShowMoodSelector] = useState(false); // Mood selector visibility
-  const [selectedChatbot, setSelectedChatbot] = useState(null); // Selected chatbot for mood change
-  const [showSummariesModal, setShowSummariesModal] = useState(false); // Summaries modal visibility
-  const [premiumBreakpoint, setPremiumBreakpoint] = useState(1); // Premium breakpoint (editable)
-  const messagesEndRef = useRef(null); // Ref for scrolling to the bottom
+  const [chatbot1Mood, setChatbot1Mood] = useState("friendly");
+  const [chatbot2Mood, setChatbot2Mood] = useState("friendly");
+  const [isSimulatorRunning, setIsSimulatorRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [summaries, setSummaries] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingSender, setTypingSender] = useState(null);
+  const [showMoodSelector, setShowMoodSelector] = useState(false);
+  const [selectedChatbot, setSelectedChatbot] = useState(null);
+  const [showSummariesModal, setShowSummariesModal] = useState(false);
+  const [newSummariesCount, setNewSummariesCount] = useState(0);
+  const [premiumBreakpoint, setPremiumBreakpoint] = useState(1);
 
-  // Start the simulator
+  const messagesEndRef = useRef(null);
+
+  const generateContent = useCallback(async (prompt) => {
+    try {
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`,
+        { contents: [{ parts: [{ text: prompt }] }] }
+      );
+      return response.data.candidates[0].content.parts[0].text;
+    } catch (error) {
+      console.error("API Error:", error);
+      return "Sorry, something went wrong!";
+    }
+  }, []);
+
+  const generateResponse = useCallback(
+    async (sender, message, targetChatbot, targetMood) => {
+      if (!isSimulatorRunning || isPaused) return;
+      setIsTyping(true);
+      setTypingSender(targetChatbot);
+
+      try {
+        const recentMessages = messages
+          .slice(-20)
+          .map((msg) => `${msg.sender}: ${msg.text}`)
+          .join("\n");
+
+        const rolePrompt = `As ${
+          targetChatbot === "chatbot1" ? "Chatbot 1" : "Chatbot 2"
+        }, ${defaultMoods[targetMood].prompt}`;
+        const fullPrompt = `${rolePrompt}\n\nConversation History:\n${recentMessages}\n\nUser: ${message}\n\nRespond conversationally in ${language}.`;
+
+        const botResponse = await generateContent(fullPrompt);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: botResponse,
+            sender: targetChatbot,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
+
+        setTimeout(() => {
+          setIsTyping(false);
+          setTypingSender(null);
+        }, 5000);
+      } catch (error) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "Connection error. Please try again.",
+            sender: "system",
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
+        setIsTyping(false);
+        setTypingSender(null);
+      }
+    },
+    [isSimulatorRunning, isPaused, messages, language, generateContent]
+  );
+
+  const generateSummary = useCallback(async () => {
+    try {
+      const recentMessages = messages
+        .slice(-10)
+        .map((msg) => `${msg.sender}: ${msg.text}`)
+        .join("\n");
+
+      const summary = await generateContent(
+        `Summarize this conversation in 1-2 sentences:\n\n${recentMessages}`
+      );
+
+      setSummaries((prev) => [
+        ...prev,
+        {
+          text: summary,
+          length: messages.length,
+          timestamp: new Date().toLocaleTimeString(),
+        },
+      ]);
+
+      setNewSummariesCount((prev) => prev + 1);
+
+      if (summaries.length + 1 >= premiumBreakpoint) {
+        setIsSimulatorRunning(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "🔒 Premium feature: Continue conversation with upgrade",
+            sender: "system",
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
+      }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Failed to generate summary",
+          sender: "system",
+          timestamp: new Date().toLocaleTimeString(),
+        },
+      ]);
+    }
+  }, [messages, summaries.length, premiumBreakpoint, generateContent]);
+
   const startSimulator = () => {
     setIsSimulatorRunning(true);
-    setIsPaused(false); // Ensure the simulator is not paused
-    setMessages([]); // Clear previous messages
-    setSummaries([]); // Clear previous summaries
-    // Trigger the first message from Chatbot 1
-    setMessages([{ text: defaultMoods[chatbot1Mood].introduction, sender: "chatbot1" }]);
+    setIsPaused(false);
+    setMessages([]);
+    setSummaries([]);
+    setNewSummariesCount(0);
+    setMessages([
+      {
+        text: defaultMoods[chatbot1Mood].introduction,
+        sender: "chatbot1",
+        timestamp: new Date().toLocaleTimeString(),
+      },
+    ]);
   };
 
-  // Stop the simulator
   const stopSimulator = () => {
     setIsSimulatorRunning(false);
-    setIsPaused(false); // Reset pause state
+    setIsPaused(false);
   };
 
-  // Pause the simulator
-  const pauseSimulator = () => {
-    setIsPaused((prev) => !prev); // Toggle pause state
-  };
+  const pauseSimulator = () => setIsPaused((prev) => !prev);
 
-  // Restart the conversation
   const restartConversation = () => {
-    setMessages([]); // Clear chat history
-    setSummaries([]); // Clear summaries
+    setMessages([]);
+    setSummaries([]);
+    setNewSummariesCount(0);
     if (isSimulatorRunning) {
-      // Restart the conversation with the first message
-      setMessages([{ text: defaultMoods[chatbot1Mood].introduction, sender: "chatbot1" }]);
+      setMessages([
+        {
+          text: defaultMoods[chatbot1Mood].introduction,
+          sender: "chatbot1",
+          timestamp: new Date().toLocaleTimeString(),
+        },
+      ]);
     }
   };
 
-  // Switch chatbot moods
   const switchChatbots = () => {
     const tempMood = chatbot1Mood;
     setChatbot1Mood(chatbot2Mood);
     setChatbot2Mood(tempMood);
   };
 
-  // Handle mood change
   const handleMoodChange = (moodKey) => {
     if (selectedChatbot === "chatbot1") {
       setChatbot1Mood(moodKey);
-    } else if (selectedChatbot === "chatbot2") {
+    } else {
       setChatbot2Mood(moodKey);
     }
     setShowMoodSelector(false);
   };
 
-  // Generate a response from the target chatbot
-  const generateResponse = async (sender, message, targetChatbot, targetMood) => {
-    if (!isSimulatorRunning || isPaused) return; // Stop if the simulator is not running or paused
-
-    setIsTyping(true); // Show typing indicator
-    setTypingSender(targetChatbot); // Set who is typing
-
-    try {
-      // Include the last 10-20 messages as context
-      const recentMessages = messages.slice(-20).map((msg) => `${msg.sender}: ${msg.text}`).join("\n");
-
-      // Add role/name awareness to the prompt
-      const roleAwarePrompt = `You are ${targetChatbot === "chatbot1" ? "Chatbot 1" : "Chatbot 2"}. ${defaultMoods[targetMood].prompt}\n\nConversation History:\n${recentMessages}\n\nUser: ${message}\n\nRespond in a conversational manner in ${language}.`;
-
-      // Generate a response from the target chatbot
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`,
-        {
-          contents: [
-            {
-              parts: [
-                {
-                  text: roleAwarePrompt,
-                },
-              ],
-            },
-          ],
-        }
-      );
-
-      const botResponse = response.data.candidates[0].content.parts[0].text;
-
-      // Add the response to the chat
-      setMessages((prev) => [...prev, { text: botResponse, sender: targetChatbot }]);
-
-      // Wait for 5 seconds before allowing the next message
-      setTimeout(() => {
-        setIsTyping(false); // Hide typing indicator
-        setTypingSender(null); // Reset typing sender
-      }, 5000); // Increased delay to 5 seconds
-    } catch (error) {
-      console.error("Error generating response:", error);
-      setMessages((prev) => [
-        ...prev,
-        { text: "Sorry, something went wrong!", sender: targetChatbot },
-      ]);
-      setIsTyping(false); // Hide typing indicator
-      setTypingSender(null); // Reset typing sender
-    }
+  const clearChat = () => {
+    setMessages([]);
+    setSummaries([]);
+    setNewSummariesCount(0);
   };
 
-  // Function to generate a summary of the last 10 messages
-  const generateSummary = async () => {
-    try {
-      const recentMessages = messages.slice(-10).map((msg) => `${msg.sender}: ${msg.text}`).join("\n");
-
-      const summaryPrompt = `Summarize the following conversation in 1-2 sentences:\n\n${recentMessages}`;
-
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`,
-        {
-          contents: [
-            {
-              parts: [
-                {
-                  text: summaryPrompt,
-                },
-              ],
-            },
-          ],
-        }
-      );
-
-      const summary = response.data.candidates[0].content.parts[0].text;
-
-      // Add the summary to the summaries state
-      setSummaries((prev) => [...prev, summary]);
-
-      // Check if the number of summaries has reached the premium breakpoint
-      if (summaries.length + 1 >= premiumBreakpoint) {
-        setIsSimulatorRunning(false); // Stop the simulator
-        setMessages((prev) => [
-          ...prev,
-          { text: "Please upgrade to premium to continue further conversations.", sender: "system" },
-        ]);
-      }
-    } catch (error) {
-      console.error("Error generating summary:", error);
-    }
-  };
-
-  // UseEffect to trigger responses when a new message is added
   useEffect(() => {
-    if (!isSimulatorRunning || isTyping || isPaused) return; // Stop if the simulator is not running, a chatbot is typing, or the simulator is paused
-
-    // Get the last message
+    if (!isSimulatorRunning || isTyping || isPaused) return;
     const lastMessage = messages[messages.length - 1];
 
-    // Check if Chatbot 1 has a new message
-    if (lastMessage.sender === "chatbot1") {
+    if (lastMessage?.sender === "chatbot1") {
       generateResponse("chatbot1", lastMessage.text, "chatbot2", chatbot2Mood);
-    }
-
-    // Check if Chatbot 2 has a new message
-    if (lastMessage.sender === "chatbot2") {
+    } else if (lastMessage?.sender === "chatbot2") {
       generateResponse("chatbot2", lastMessage.text, "chatbot1", chatbot1Mood);
     }
-  }, [messages, isSimulatorRunning, isTyping, isPaused]);
+  }, [
+    messages,
+    isSimulatorRunning,
+    isTyping,
+    isPaused,
+    chatbot1Mood,
+    chatbot2Mood,
+    generateResponse,
+  ]);
 
-  // UseEffect to generate summary every 10 messages
   useEffect(() => {
     if (messages.length > 0 && messages.length % 10 === 0) {
       generateSummary();
     }
-  }, [messages]);
+  }, [messages, generateSummary]);
 
-  // Clear chat history
-  const clearChat = () => {
-    setMessages([]);
-    setSummaries([]); // Clear summaries
-  };
-
-  // Scroll to the bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  return (
-    <div className="flex flex-col h-screen text-white">
-      {/* Simulator Controls (Top) */}
-      <div className="p-4 bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df] backdrop-blur-sm shadow-lg flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-            Chatbot Simulator
-          </h2>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={clearChat}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center"
-          >
-            <FaTrash className="w-5 h-5" />
-          </button>
-          <button
-            onClick={startSimulator}
-            disabled={isSimulatorRunning}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center disabled:opacity-50"
-          >
-            <FaPlay className="w-5 h-5" />
-          </button>
-          <button
-            onClick={pauseSimulator}
-            disabled={!isSimulatorRunning}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center"
-          >
-            {isPaused ? <FaPlay className="w-5 h-5" /> : <FaPause className="w-5 h-5" />}
-          </button>
-          <button
-            onClick={stopSimulator}
-            disabled={!isSimulatorRunning}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center disabled:opacity-50"
-          >
-            <FaStop className="w-5 h-5" />
-          </button>
-          <button
-            onClick={restartConversation}
-            disabled={!isSimulatorRunning}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center"
-          >
-            <FaRedo className="w-5 h-5" />
-          </button>
-          <button
-            onClick={switchChatbots}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center"
-          >
-            <FaExchangeAlt className="w-5 h-5" />
-          </button>
+  const ControlButton = ({
+    icon,
+    onClick,
+    tooltip,
+    disabled = false,
+    children,
+  }) => (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="relative p-3 bg-gray-700/50 rounded-lg hover:bg-gray-600/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={onClick}
+      disabled={disabled}
+      data-tooltip-id="control-tooltip"
+      data-tooltip-content={tooltip}
+    >
+      {icon}
+      {children}
+    </motion.button>
+  );
+
+  const ChatbotProfile = ({ id, mood }) => (
+    <div className="p-4 bg-gray-800/50 rounded-xl backdrop-blur-sm">
+      <div className="flex items-center gap-3 mb-2">
+        <img
+          src={defaultMoods[mood].image}
+          className="w-12 h-12 rounded-full border-2 border-cyan-400"
+          alt="Chatbot"
+        />
+        <div>
+          <h3 className="font-semibold text-cyan-400">
+            {id === "chatbot1" ? "Chatbot 1" : "Chatbot 2"}
+          </h3>
+          <p className="text-sm text-gray-300">{defaultMoods[mood].name}</p>
         </div>
       </div>
-
-      {/* Chat Messages */}
-     {/* Chat Messages */}
-<div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
-  <AnimatePresence>
-    {messages.map((msg, index) => (
-      <motion.div
-        key={index}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-        className={`flex ${
-          msg.sender === "chatbot2"
-            ? "justify-end"
-            : msg.sender === "system"
-            ? "justify-center"
-            : "justify-start"
-        } mb-3`}
+      <button
+        onClick={() => {
+          setSelectedChatbot(id);
+          setShowMoodSelector(true);
+        }}
+        className="w-full py-2 bg-gray-700/50 rounded-lg hover:bg-gray-600/50 transition-colors"
       >
-        <motion.div
-          className={`max-w-[70%] p-3 rounded-lg ${
-            msg.sender === "chatbot2"
-              ? "bg-[#ffffff39] text-white rounded-br-none"
-              : msg.sender === "system"
-              ? "bg-[#213d6d] text-white rounded-lg text-center flex flex-col" // Different background for system messages
-              : "bg-[#00000070] text-white rounded-bl-none"
-          }`}
-        >
-          <div className="prose text-sm md:text-base">
-            {parseMarkdown(msg.text)}
-            {msg.sender === "system" &&
-            <span className="text-xs text-gray-300">System</span>
-            
-            }
-          </div>
-        </motion.div>
-      </motion.div>
-    ))}
-  </AnimatePresence>
+        Change Mood
+      </button>
+    </div>
+  );
 
-  {/* Typing Indicator */}
-  {isTyping && (
+  const Message = ({ message }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className={`flex ${
+        message.sender === "chatbot2"
+          ? "justify-end"
+          : message.sender === "system"
+          ? "justify-center"
+          : "justify-start"
+      } mb-4`}
+    >
+      <div
+        className={`max-w-[80%] p-4 rounded-2xl ${
+          message.sender === "chatbot2"
+            ? "bg-blue-600/30 backdrop-blur-sm rounded-br-none"
+            : message.sender === "system"
+            ? "bg-purple-600/20 border border-purple-500/30"
+            : "bg-gray-700/50 backdrop-blur-sm rounded-bl-none"
+        }`}
+      >
+        <div className="prose prose-invert text-sm">
+          {parseMarkdown(message.text)}
+        </div>
+        <span className="text-xs text-gray-400 mt-1 block">
+          {message.timestamp}
+        </span>
+      </div>
+    </motion.div>
+  );
+
+  const TypingIndicator = ({ sender }) => (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className={`flex ${typingSender === "chatbot2" ? "justify-end" : "justify-start"} mb-3`}
+      className={`flex ${
+        sender === "chatbot2" ? "justify-end" : "justify-start"
+      } mb-4`}
     >
-      <div
-        className={`max-w-[70%] p-3 rounded-lg ${
-          typingSender === "chatbot2"
-            ? "bg-[#ffffff39] text-white rounded-br-none"
-            : "bg-[#00000070] text-white rounded-bl-none"
-        }`}
-      >
-        <div className="flex space-x-1">
-          <div
-            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-            style={{ animationDelay: "0.1s" }}
-          />
-          <div
-            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-            style={{ animationDelay: "0.3s" }}
-          />
-          <div
-            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-            style={{ animationDelay: "0.5s" }}
-          />
+      <div className="max-w-[80%] p-4 rounded-2xl bg-gray-700/50 backdrop-blur-sm">
+        <div className="flex space-x-2">
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="w-2 h-2 bg-gray-400 rounded-full"
+              animate={{ y: [0, -5, 0] }}
+              transition={{ repeat: Infinity, delay: i * 0.2 }}
+            />
+          ))}
         </div>
       </div>
     </motion.div>
-  )}
+  );
 
-  <div ref={messagesEndRef} />
-</div>
+  const MoodSelector = ({ onMoodChange, onClose }) => (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center"
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-gray-800/90 backdrop-blur-xl rounded-xl p-6 max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-semibold mb-4">Select Mood</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {Object.entries(defaultMoods).map(([key, moodInfo]) => {
+            const isSelected =
+              (selectedChatbot === "chatbot1" ? chatbot1Mood : chatbot2Mood) === key;
 
-      {/* Simulator Controls (Bottom) */}
-      <div className="p-4 bg-gradient-to-r from-[#1e1b1bdf] to-[#000000df] backdrop-blur-sm shadow-lg flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => {
-              setSelectedChatbot("chatbot1");
-              setShowMoodSelector(!showMoodSelector);
-            }}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center"
-          >
-            <span>Chatbot 1: {defaultMoods[chatbot1Mood].name}</span>
-          </button>
-          <button
-            onClick={() => {
-              setSelectedChatbot("chatbot2");
-              setShowMoodSelector(!showMoodSelector);
-            }}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center"
-          >
-            <span>Chatbot 2: {defaultMoods[chatbot2Mood].name}</span>
+            return (
+              <button
+                key={key}
+                onClick={() => onMoodChange(key)}
+                className={`p-4 rounded-lg transition-colors flex flex-col items-center ${
+                  isSelected
+                    ? "bg-blue-700/80 border border-blue-500"
+                    : "bg-gray-700/50 hover:bg-gray-600/50"
+                }`}
+              >
+                <img
+                  src={moodInfo.image}
+                  className="w-12 h-12 rounded-full mb-2 border-2 border-cyan-400"
+                  alt={moodInfo.name}
+                />
+                <span className="text-sm">{moodInfo.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+
+  const SummariesModal = ({ summaries, onClose }) => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center"
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-gray-800 rounded-xl p-6 w-[90%] md:max-w-3xl max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Conversation Summaries</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-700/50 rounded-lg">
+            ×
           </button>
         </div>
-        <div className="flex items-center space-x-3">
-          {/* Export Conversation Button */}
-          <button
-            onClick={() => {
-              // TODO: Implement export functionality
-            }}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center"
-          >
-            <FaFileExport className="w-5 h-5" />
-          </button>
+        {summaries.length > 0 ? (
+          summaries.map((summary, index) => (
+            <div key={index} className="mb-4 p-4 bg-gray-700/30 rounded-lg">
+              <div className="prose prose-invert text-sm">
+                {parseMarkdown(
+                  `**${summary.timestamp}** (${summary.length} messages): ${summary.text}`
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-400">No summaries generated yet</p>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+  
 
-          {/* Import Conversation Button */}
-          <button
-            onClick={() => {
-              // TODO: Implement import functionality
-            }}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center"
-          >
-            <FaFileImport className="w-5 h-5" />
-          </button>
-
-          {/* Summaries Button with Notification Badge */}
-          <button
-            onClick={() => setShowSummariesModal(true)}
-            className="p-2 bg-[#ffffff15] rounded-lg text-white flex items-center justify-center relative"
-          >
-            <FaList className="w-5 h-5" />
-            {summaries.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">
-                {summaries.length}
-              </span>
-            )}
-          </button>
+  return (
+    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-900 to-blue-900">
+      <div className="p-4 bg-gray-800/80 backdrop-blur-lg border-b border-gray-700 flex flex-wrap gap-4 items-center justify-center md:justify-between">
+        <h1 className="text-xl ml-12 lg:ml-0 font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+          AI Conversation Simulator
+        </h1>
+        <div className="flex flex-wrap gap-2">
+          <ControlButton
+            icon={isSimulatorRunning ? (isPaused ? <FaPlay /> : <FaPause />) : <FaPlay />}
+            onClick={isSimulatorRunning ? pauseSimulator : startSimulator}
+            tooltip={isSimulatorRunning ? (isPaused ? "Resume" : "Pause") : "Start"}
+            disabled={isSimulatorRunning && isPaused}
+          />
+          <ControlButton
+            icon={<FaStop />}
+            onClick={stopSimulator}
+            tooltip="Stop"
+            disabled={!isSimulatorRunning}
+          />
+          <ControlButton
+            icon={<FaRedo />}
+            onClick={restartConversation}
+            tooltip="Restart"
+            disabled={!isSimulatorRunning}
+          />
+          <ControlButton
+            icon={<FaExchangeAlt />}
+            onClick={switchChatbots}
+            tooltip="Swap Chatbots"
+          />
+          <ControlButton
+            icon={<FaTrash />}
+            onClick={clearChat}
+            tooltip="Clear Chat"
+          />
         </div>
       </div>
 
-      {/* Summaries Modal */}
-      <AnimatePresence>
-        {showSummariesModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => setShowSummariesModal(false)}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 overflow-hidden">
+        <div className="hidden lg:block space-y-4">
+          <ChatbotProfile id="chatbot1" mood={chatbot1Mood} />
+          <ChatbotProfile id="chatbot2" mood={chatbot2Mood} />
+        </div>
+
+        <div className="lg:col-span-2 bg-gray-800/30 rounded-xl p-4 overflow-y-auto">
+          <AnimatePresence>
+            {messages.map((msg, index) => (
+              <Message key={index} message={msg} />
+            ))}
+          </AnimatePresence>
+          {isTyping && <TypingIndicator sender={typingSender} />}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      <div className="p-4 bg-gray-800/80 backdrop-blur-lg border-t border-gray-700 flex gap-2 items-center justify-between">
+        <div className="flex gap-2 lg:hidden">
+          <ControlButton
+            icon={<FaSmile />}
+            onClick={() => {
+              setSelectedChatbot("chatbot1");
+              setShowMoodSelector(true);
+            }}
+            tooltip="Change Chatbot 1 Mood"
+          />
+          <ControlButton
+            icon={<FaSmile />}
+            onClick={() => {
+              setSelectedChatbot("chatbot2");
+              setShowMoodSelector(true);
+            }}
+            tooltip="Change Chatbot 2 Mood"
+          />
+        </div>
+        <div className="flex gap-2">
+          <ControlButton
+            icon={<FaFileExport />}
+            onClick={() => {}}
+            tooltip="Export Conversation"
+          />
+          <ControlButton
+            icon={<FaFileImport />}
+            onClick={() => {}}
+            tooltip="Import Conversation"
+          />
+          <ControlButton
+            icon={<FaList />}
+            onClick={() => {
+              setShowSummariesModal(true);
+              setNewSummariesCount(0);
+            }}
+            tooltip="View Summaries"
           >
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="bg-[#1e1b1b] rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-xl font-bold mb-4">Conversation Summaries</h2>
-              {summaries.length > 0 ? (
-                summaries.map((summary, index) => (
-                  <div key={index} className="mb-4">
-                    <div className="prose text-sm md:text-base">
-                      {parseMarkdown(`**Summary ${index + 1}:** ${summary}`)}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-400">No summaries yet.</p>
-              )}
-            </motion.div>
-          </motion.div>
+            {newSummariesCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {newSummariesCount}
+              </span>
+            )}
+          </ControlButton>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showMoodSelector && (
+          <MoodSelector
+            onMoodChange={handleMoodChange}
+            onClose={() => setShowMoodSelector(false)}
+          />
+        )}
+        {showSummariesModal && (
+          <SummariesModal
+            summaries={summaries}
+            onClose={() => setShowSummariesModal(false)}
+          />
         )}
       </AnimatePresence>
 
-      {/* Mood Selector */}
-      <AnimatePresence>
-        {showMoodSelector && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="absolute bottom-20 right-4 bg-[#000000] rounded-lg p-2 shadow-lg z-50"
-          >
-            <div className="grid grid-cols-3 gap-2">
-              {Object.entries(defaultMoods).map(([key, mood]) => (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="p-2 bg-[#ffffff15] rounded-lg flex flex-col items-center space-y-1 cursor-pointer hover:bg-[#ffffff25] transition-colors"
-                  onClick={() => handleMoodChange(key)}
-                >
-                  <img
-                    src={mood.image}
-                    alt={mood.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                  <p className="text-xs text-gray-200 text-center">
-                    {mood.name}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Tooltip id="control-tooltip" />
     </div>
   );
 };

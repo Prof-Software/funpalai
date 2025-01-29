@@ -18,11 +18,15 @@
   font-weight: normal;
   font-style: normal;
 }
+*{
+  outline: none;
+}
 body {
   /* font-family: "MyFont" ,Arial, Helvetica, sans-serif; */
   background-color: black;
   overflow-x: hidden;
   overflow-y: hidden;
+  color: white;
 }
 
 .gambarino{
